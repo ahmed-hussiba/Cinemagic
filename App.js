@@ -1,18 +1,20 @@
 // import { StatusBar } from "expo-status-bar";
 import { StyleSheet, Text, View } from "react-native";
-import HomePage from "./pages/HomePage";
 import MovieContext from "./Context/MovieContext";
-import DrawerNavigation from "./Navigation/DrawerNavigation";
 import 'react-native-gesture-handler';
 import FavouriteMoviesContext from "./Context/FavouriteMoviesContext";
+import StackNavigatorComp from "./Navigation/StackNavigators";
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 export default function App() {
   return (
     <>
     <FavouriteMoviesContext>
     <MovieContext>
-    <DrawerNavigation>
-    </DrawerNavigation>
+    <GestureHandlerRootView>
+      <StackNavigatorComp>
+      </StackNavigatorComp>
+    </GestureHandlerRootView>
     </MovieContext>
     </FavouriteMoviesContext>
     </>

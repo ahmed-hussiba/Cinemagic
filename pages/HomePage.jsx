@@ -1,31 +1,40 @@
 import React, { useContext, useEffect, useState } from "react";
-import { FlatList, StyleSheet, View, Text } from "react-native";
-import { TextInput, Button } from "react-native-paper";
+import { FlatList, StyleSheet, View, Text, Pressable } from "react-native";
+import { TextInput, Button, Menu, Divider, Provider } from "react-native-paper";
 import CardComp from "../Components/Card";
 import { movieContext } from "../Context/MovieContext";
+import { useNavigation } from "@react-navigation/native";
+import { routes } from "../routes/routes";
 
 const HomePage = () => {
   const { movies } = useContext(movieContext);
-  // const {setFavMovies, FavMovies} = useContext(favoutriteMoviesContext)
   const [inputValue, setInputValue] = useState("");
   const [filteredMovies, setFilteredMovies] = useState([]);
-  
-  // console.warn(filteredMovies);
-  const renderMovieItem = ({ item }) => (
-    <CardComp key={item.id} movie={item} style={styles.card} />
-  );
-  
+  const [visible, setVisible] = useState(false);
+
+  const { popularMovies } = useContext(movieContext);
+  const { nowPlayingMovies } = useContext(movieContext);
+  const { upcomingMovies } = useContext(movieContext);
+  const { topRatedMovies } = useContext(movieContext);
+
+
+
+  const {navigate} = useNavigation()
   
   useEffect(() => {
-    setFilteredMovies(movies)
-    // console.log("Hi");
-  }, [movies])
-
+    setFilteredMovies(movies);
+  }, [movies]);
 
   const handleInputChange = (txt) => {
     setInputValue(txt);
     searchMovie(txt);
   };
+
+  const renderMovieItem = ({ item }) => (
+    <Pressable onPress={() => navigate(routes.movieDetails)}>
+      <CardComp isHomePage={true} key={item.id} movie={item} style={styles.card} />
+    </Pressable>
+  );
 
   const searchMovie = (txt) => {
     if (!txt) {
@@ -38,23 +47,52 @@ const HomePage = () => {
     }
   };
 
-  if(!filteredMovies){
-    <Text>Loading...</Text>
+  const handlePopularClick = () => {
+      setFilteredMovies(popularMovies)
+    }
+    
+    const handleNowPlayingClick = () => {
+      setFilteredMovies(nowPlayingMovies)
+      
+    }
+    
+    const handleUpComingClick = () => {
+      setFilteredMovies(upcomingMovies)
+      
+    }
+    
+    const handleTopRatedClick = () => {
+    setFilteredMovies(topRatedMovies)
+
   }
+
+
   return (
-    <>
-      <View style={styles.searchContainer}>
-        <TextInput
-          style={[styles.txtInput, { color: "white" }]}
-          placeholder="Search a Movie"
-          value={inputValue}
-          onChangeText={handleInputChange}
-        />
-        <Button mode="contained" onPress={() => console.log("Pressed")}>
-          Filter
-        </Button>
-      </View>
+    <Provider>
       <View style={styles.container}>
+        <View style={styles.searchContainer}>
+          <TextInput
+            style={[styles.txtInput, { color: "white" }]}
+            placeholder="Search a Movie"
+            value={inputValue}
+            onChangeText={handleInputChange}
+          />
+          <Menu
+            visible={visible}
+            onDismiss={() => setVisible(false)}
+            anchor={
+              <Button onPress={() => setVisible(true)} style={{ backgroundColor: "black" }}>
+                Filter
+              </Button>
+            }
+          >
+            <Menu.Item onPress={handlePopularClick} title="Popular" />
+            <Menu.Item onPress={handleNowPlayingClick} title="Now Playing" />
+            <Menu.Item onPress={handleUpComingClick} title="Upcoming" />
+            <Menu.Item onPress={handleTopRatedClick} title="Top Rated" />
+            <Divider />
+          </Menu>
+        </View>
         <FlatList
           data={filteredMovies}
           renderItem={renderMovieItem}
@@ -62,7 +100,7 @@ const HomePage = () => {
           horizontal={false}
         />
       </View>
-    </>
+    </Provider>
   );
 };
 
@@ -76,9 +114,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   txtInput: {
-    width: "70%",
-    marginHorizontal: 10,
+    flex: 1,
     height: 45,
+    marginRight: 10,
   },
 });
 
