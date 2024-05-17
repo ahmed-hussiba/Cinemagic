@@ -9,7 +9,7 @@ const FavouriteMoviesContext = ({children}) => {
     const [FavMovies, setFavMovies] = useState([])
 
 
-    console.log("from context",FavMovies);
+    // console.log("from context",FavMovies);
 
     return (
         <favoutriteMoviesContext.Provider value={{setFavMovies, FavMovies}}>
