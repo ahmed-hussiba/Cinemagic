@@ -98,7 +98,7 @@ const HomePage = () => {
               <Menu.Item onPress={handleTopRatedClick} titleStyle={{color: "white"}} title="Top Rated" />
               <Divider />
             </Menu>
-          </View>
+          </View>   
           <FlatList
             contentContainerStyle={styles.listContent}
             data={filteredMovies}

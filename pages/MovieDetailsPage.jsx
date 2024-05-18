@@ -1,9 +1,13 @@
-import React, { useEffect, useState } from "react";
-import { StyleSheet, View, Text, Image, ScrollView } from "react-native";
+import React, { useEffect, useState, useContext } from "react";
+import { StyleSheet, View, Text, Image, ScrollView, FlatList } from "react-native";
+import { movieContext } from "../Context/MovieContext";
 
 const MovieDetailsPage = ({ route }) => {
   const { params } = route;
   const [movie, setMovie] = useState(null);
+  const [popMovies, setPopMovies] = useState([]);
+
+  const { popularMovies } = useContext(movieContext);
 
   useEffect(() => {
     fetch(
@@ -15,6 +19,10 @@ const MovieDetailsPage = ({ route }) => {
       })
       .catch((err) => console.log("Error: ", err));
   }, [params]);
+
+  useEffect(() => {
+    setPopMovies(popularMovies);
+  }, [popularMovies]);
 
   if (!movie) {
     return (
@@ -47,6 +55,25 @@ const MovieDetailsPage = ({ route }) => {
           <Text style={styles.infoValue}>{movie.vote_average}</Text>
         </View>
       </View>
+      <Text style={styles.popularTitle}>Popular Movies</Text>
+      <View style={styles.popMoviesSection}>
+        <FlatList
+          horizontal
+          data={popMovies}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={({ item }) => (
+            <View style={styles.popMovieContainer}>
+              <Image
+                source={{ uri: `https://image.tmdb.org/t/p/w300${item.poster_path}` }}
+                style={styles.popMoviePoster}
+              />
+              <Text style={styles.popMovieTitle}>{item.title}</Text>
+            </View>
+          )}
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.popMoviesList}
+        />
+      </View>
     </ScrollView>
   );
 };
@@ -55,8 +82,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#141414",
-    // paddingTop: 10,
-    marginTop:30
+    marginTop: 30,
   },
   loadingContainer: {
     flex: 1,
@@ -113,6 +139,35 @@ const styles = StyleSheet.create({
   infoValue: {
     fontSize: 16,
     color: "#ddd",
+  },
+  popularTitle: {
+    fontSize: 24,
+    color: "#fff",
+    marginTop: 20,
+    marginLeft: 10,
+    marginBottom: 10,
+  },
+  popMoviesSection: {
+    marginBottom: 30,
+  },
+  popMoviesList: {
+    paddingLeft: 10,
+  },
+  popMovieContainer: {
+    marginRight: 15,
+    alignItems: "center",
+  },
+  popMoviePoster: {
+    width: 150,
+    height: 225,
+    borderRadius: 10,
+  },
+  popMovieTitle: {
+    fontSize: 16,
+    color: "#fff",
+    textAlign: "center",
+    marginTop: 10,
+    width: 150,
   },
 });
 
