@@ -1,5 +1,5 @@
 import * as React from "react";
-import { StyleSheet } from "react-native";
+import { StyleSheet, View } from "react-native";
 import { Button, Card, Text } from "react-native-paper";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import { favoutriteMoviesContext } from "../Context/FavouriteMoviesContext";
@@ -23,6 +23,28 @@ const CardComp = ({ movie }) => {
     }
   };
 
+  const renderStars = (rating) => {
+    const stars = [];
+    const starCount = Math.round(rating / 2); // Convert rating to 5-star scale
+    for (let i = 1; i <= 5; i++) {
+      let name = "star-border";
+      if (i <= starCount) {
+        name = "star";
+      } else if (i - starCount < 1) {
+        name = "star-half";
+      }
+      stars.push(
+        <MaterialIcons
+          key={i}
+          name={name}
+          size={20}
+          color="#FFD700" // Gold color for stars
+        />
+      );
+    }
+    return stars;
+  };
+
   return (
     <Card style={styles.CardStyle}>
       <Card.Cover
@@ -32,14 +54,17 @@ const CardComp = ({ movie }) => {
         style={styles.cover}
       />
       <Card.Content>
-        <Text
-          style={styles.title}
-          variant="titleLarge"
-        >
+        <Text style={styles.title} variant="titleLarge">
           {movie.original_title}
         </Text>
         <Text style={styles.subtitle}>
           {movie.release_date ? `Release Date: ${movie.release_date}` : ""}
+        </Text>
+        <View style={styles.ratingContainer}>
+          {renderStars(movie.vote_average)}
+        </View>
+        <Text style={styles.genres}>
+          {movie.genres ? `Genres: ${movie.genres.map((g) => g.name).join(", ")}` : ""}
         </Text>
         <Text style={styles.overview}>
           {movie.overview ? `${movie.overview.substring(0, 100)}...` : ""}
@@ -86,6 +111,16 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     color: "gray",
+    textAlign: "center",
+    marginBottom: 10,
+  },
+  ratingContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    marginBottom: 10,
+  },
+  genres: {
+    color: "lightgray",
     textAlign: "center",
     marginBottom: 10,
   },

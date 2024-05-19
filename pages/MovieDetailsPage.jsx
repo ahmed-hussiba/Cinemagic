@@ -1,61 +1,99 @@
-import React, { useEffect, useState, useContext } from "react";
-import { StyleSheet, View, Text, Image, ScrollView, FlatList } from "react-native";
+import React, { useEffect, useState, useContext, useCallback } from "react";
+import {
+  StyleSheet,
+  View,
+  Text,
+  Image,
+  ScrollView,
+  FlatList,
+  Pressable,
+} from "react-native";
 import { movieContext } from "../Context/MovieContext";
+import YoutubePlayer from "react-native-youtube-iframe";
+import { Dialog } from "@rneui/base/dist";
 
 const MovieDetailsPage = ({ route }) => {
   const { params } = route;
   const [movie, setMovie] = useState(null);
   const [popMovies, setPopMovies] = useState([]);
-
+  const [trailerId, setTrailerId] = useState("");
   const { popularMovies } = useContext(movieContext);
+  const [visible, setVisible] = useState(false);
+  const [playing, setPlaying] = useState(false);
 
-  useEffect(() => {
+  const fetchMovieDetails = useCallback(() => {
+    console.log("Fetching movie details...");
     fetch(
-      `https://api.themoviedb.org/3/movie/${params}?api_key=750ea252b384c0245473348ca6525dc0`
+      `https://api.themoviedb.org/3/movie/${params}?api_key=750ea252b384c0245473348ca6525dc0&append_to_response=videos`
     )
       .then((res) => res.json())
       .then((res) => {
+        console.log("Movie details fetched: ", res);
         setMovie(res);
+        const trailer = res.videos.results.find(
+          (video) => video.type === "Trailer"
+        );
+        if (trailer) {
+          setTrailerId(trailer.key);
+          console.log("Trailer ID: ", trailer.key);
+        } else {
+          console.log("No trailer found");
+        }
       })
-      .catch((err) => console.log("Error: ", err));
+      .catch((err) => console.log("Error fetching movie details: ", err));
   }, [params]);
+
+  useEffect(() => {
+    fetchMovieDetails();
+  }, [fetchMovieDetails]);
 
   useEffect(() => {
     setPopMovies(popularMovies);
   }, [popularMovies]);
 
-  if (!movie) {
-    return (
-      <View style={styles.loadingContainer}>
-        <Text style={styles.loadingText}>Loading...</Text>
-      </View>
-    );
-  }
+  const toggleDialog = () => {
+    setVisible(!visible);
+  };
+
+  const togglePlaying = useCallback(() => {
+    setPlaying((prev) => !prev);
+  }, []);
+
+  const onReady = useCallback(() => {
+    setPlaying(true); // Start playing automatically when the player is ready
+  }, []);
 
   return (
     <ScrollView style={styles.container}>
       <Image
-        source={{ uri: `https://image.tmdb.org/t/p/w500${movie.poster_path}` }}
+        source={{ uri: `https://image.tmdb.org/t/p/w500${movie?.poster_path}` }}
         style={styles.poster}
       />
       <View style={styles.detailsContainer}>
-        <Text style={styles.title}>{movie.title}</Text>
-        {movie.tagline ? <Text style={styles.tagline}>"{movie.tagline}"</Text> : null}
-        <Text style={styles.overview}>{movie.overview}</Text>
+        <Text style={styles.title}>{movie?.title}</Text>
+        {movie?.tagline ? (
+          <Text style={styles.tagline}>"{movie.tagline}"</Text>
+        ) : null}
+        <Text style={styles.overview}>{movie?.overview}</Text>
         <View style={styles.infoContainer}>
           <Text style={styles.infoLabel}>Release Date:</Text>
-          <Text style={styles.infoValue}>{movie.release_date}</Text>
+          <Text style={styles.infoValue}>{movie?.release_date}</Text>
         </View>
         <View style={styles.infoContainer}>
           <Text style={styles.infoLabel}>Runtime:</Text>
-          <Text style={styles.infoValue}>{movie.runtime} minutes</Text>
+          <Text style={styles.infoValue}>{movie?.runtime} minutes</Text>
         </View>
         <View style={styles.infoContainer}>
           <Text style={styles.infoLabel}>Vote Average:</Text>
-          <Text style={styles.infoValue}>{movie.vote_average}</Text>
+          <Text style={styles.infoValue}>{movie?.vote_average}</Text>
         </View>
+        {trailerId ? (
+          <Pressable style={styles.trailerButton} onPress={toggleDialog}>
+            <Text style={styles.trailerButtonText}>Watch the Trailer</Text>
+          </Pressable>
+        ) : null}
       </View>
-      <Text style={styles.popularTitle}>Popular Movies</Text>
+      <Text style={styles.popularTitle}>Similar Movies</Text>
       <View style={styles.popMoviesSection}>
         <FlatList
           horizontal
@@ -64,7 +102,9 @@ const MovieDetailsPage = ({ route }) => {
           renderItem={({ item }) => (
             <View style={styles.popMovieContainer}>
               <Image
-                source={{ uri: `https://image.tmdb.org/t/p/w300${item.poster_path}` }}
+                source={{
+                  uri: `https://image.tmdb.org/t/p/w300${item.poster_path}`,
+                }}
                 style={styles.popMoviePoster}
               />
               <Text style={styles.popMovieTitle}>{item.title}</Text>
@@ -73,7 +113,23 @@ const MovieDetailsPage = ({ route }) => {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.popMoviesList}
         />
-      </View>
+      </View> 
+      <Dialog style={styles.centeredView}  isVisible={visible} onBackdropPress={toggleDialog}>
+            
+              {/* <View style={styles.centeredView}> */}
+          <YoutubePlayer
+            
+            width={300}
+            height={180}
+            videoId={trailerId}
+            play={true}
+            onReady={onReady}
+            onChangeState={(event) =>
+              console.log("Player state changed: ", event)
+            }
+          />
+        {/* </View> */}
+      </Dialog>
     </ScrollView>
   );
 };
@@ -83,16 +139,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#141414",
     marginTop: 30,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#141414",
-  },
-  loadingText: {
-    color: "#fff",
-    fontSize: 18,
   },
   poster: {
     width: "100%",
@@ -140,6 +186,18 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#ddd",
   },
+  trailerButton: {
+    backgroundColor: "#009688",
+    padding: 10,
+    borderRadius: 5,
+    alignItems: "center",
+    marginVertical: 10,
+  },
+  trailerButtonText: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
   popularTitle: {
     fontSize: 24,
     color: "#fff",
@@ -168,6 +226,11 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginTop: 10,
     width: 150,
+  },
+  centeredView: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
 });
 
